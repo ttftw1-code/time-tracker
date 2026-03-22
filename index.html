@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0f1e">
+<title>Time Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e; --surface: #141b2d; --surface2: #1c2640; --surface3: #243052;
+    --border: #2a3654; --text: #e8edf5; --text2: #8896b3; --text3: #576380;
+    --accent: #3b82f6; --accent-glow: rgba(59,130,246,0.15);
+    --danger: #ef4444; --success: #34d399; --radius: 14px;
+    --font: 'Outfit', -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; min-height: 100dvh; overflow-x: hidden; }
+  input, button, select { font-family: inherit; outline: none; }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="date"], input[type="time"] {
+    -webkit-appearance: none; color-scheme: dark;
+  }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+  .fade-up { animation: fadeUp 0.3s ease both; }
+  .fade-in { animation: fadeIn 0.25s ease both; }
+
+  /* App shell */
+  .app { max-width: 480px; margin: 0 auto; padding: 16px 16px 100px; position: relative; }
+  .header { padding: 12px 0 20px; }
+  .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #e8edf5, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .header .sub { font-size: 13px; color: var(--text3); margin-top: 2px; font-weight: 400; }
+
+  /* Connection indicator */
+  .connection { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); margin-top: 8px; font-weight: 500; }
+  .connection .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-ok { background: var(--success); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
+  .dot-err { background: var(--danger); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+  .dot-load { background: var(--accent); animation: pulse 1.2s infinite; }
+
+  /* Setup overlay */
+  .setup-overlay {
+    position: fixed; inset: 0; background: var(--bg); z-index: 200; display: flex;
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  .setup-card {
+    background: var(--surface); border-radius: 20px; padding: 32px 24px; max-width: 420px; width: 100%;
+    border: 1px solid var(--border);
+  }
+  .setup-card h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .setup-card p { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; }
+  .setup-card input[type="text"] {
+    width: 100%; padding: 14px 16px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-size: 14px; font-family: var(--mono);
+  }
+  .setup-card input[type="text"]::placeholder { color: var(--text3); }
+  .setup-card .btn-connect {
+    width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 12px;
+    transition: background 0.2s;
+  }
+  .setup-card .btn-connect:active { background: #2563eb; }
+
+  /* Tabs */
+  .tabs {
+    display: flex; gap: 3px; background: var(--surface); border-radius: 12px; padding: 3px; margin-bottom: 18px;
+  }
+  .tab {
+    flex: 1; padding: 10px 0; border: none; border-radius: 10px; cursor: pointer;
+    font-size: 13px; font-weight: 600; transition: all 0.2s;
+    background: transparent; color: var(--text3);
+  }
+  .tab.active { background: var(--accent); color: #fff; }
+
+  /* Date picker row */
+  .date-row {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+  }
+  .date-input {
+    flex: 1; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: var(--mono); font-size: 14px;
+  }
+  .remaining-badge {
+    padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    font-family: var(--mono); white-space: nowrap;
+  }
+
+  /* Category grid */
+  .cat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 14px; }
+  .cat-btn {
+    padding: 10px 2px; border: 2px solid transparent; border-radius: 12px;
+    cursor: pointer; text-align: center; background: var(--surface); transition: all 0.15s;
+  }
+  .cat-btn.selected { border-color: var(--accent); background: var(--accent-glow); }
+  .cat-btn .icon { font-size: 20px; }
+  .cat-btn .label { font-size: 9px; font-weight: 600; color: var(--text2); margin-top: 2px; line-height: 1.2; }
+  .cat-btn.selected .label { color: var(--accent); }
+
+  /* Entry mode toggle */
+  .mode-toggle {
+    display: flex; gap: 3px; background: var(--surface); border-radius: 8px; padding: 3px; margin-bottom: 12px;
+  }
+  .mode-btn {
+    flex: 1; padding: 7px 0; border: none; border-radius: 6px; cursor: pointer;
+    font-size: 12px; font-weight: 600; background: transparent; color: var(--text3); transition: all 0.2s;
+  }
+  .mode-btn.active { background: var(--surface3); color: var(--text); }
+
+  /* Input rows */
+  .input-row { display: flex; gap: 8px; margin-bottom: 20px; align-items: stretch; }
+  .dur-input-wrap { flex: 1; position: relative; }
+  .dur-input {
+    width: 100%; padding: 12px 34px 12px 14px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: var(--mono); font-size: 16px; text-align: center;
+  }
+  .dur-suffix {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: var(--text3); font-weight: 600;
+  }
+  .time-input {
+    flex: 1; padding: 12px 10px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); font-family: var(--mono); font-size: 14px; text-align: center;
+  }
+  .time-arrow { display: flex; align-items: center; color: var(--text3); font-size: 16px; padding: 0 2px; }
+
+  /* Buttons */
+  .btn-add {
+    padding: 12px 20px; background: var(--accent); color: #fff; border: none;
+    border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer;
+    font-family: var(--font); white-space: nowrap; transition: background 0.2s;
+  }
+  .btn-add:active { background: #2563eb; }
+  .btn-cancel {
+    padding: 12px 14px; background: var(--surface2); color: var(--text2); border: none;
+    border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: var(--font);
+  }
+
+  /* Entry list */
+  .section-title {
+    font-size: 12px; font-weight: 600; color: var(--text3); margin-bottom: 10px;
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .entry-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    background: var(--surface); border-radius: 12px; margin-bottom: 6px;
+    border-left: 4px solid var(--accent); animation: fadeUp 0.2s ease both;
+  }
+  .entry-icon { font-size: 18px; }
+  .entry-label { flex: 1; font-size: 14px; font-weight: 500; }
+  .entry-time-info { font-size: 10px; color: var(--text3); font-family: var(--mono); }
+  .entry-dur { font-family: var(--mono); font-size: 14px; font-weight: 600; }
+  .entry-action {
+    background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text3);
+    padding: 4px; transition: color 0.15s;
+  }
+  .entry-action:hover { color: var(--text); }
+
+  /* Progress bar */
+  .day-bar-wrap { margin-top: 16px; }
+  .day-bar-label { display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  .day-bar { height: 10px; background: var(--surface); border-radius: 6px; overflow: hidden; display: flex; }
+  .day-bar-seg { transition: width 0.3s ease; }
+
+  /* Charts */
+  .chart-bar-item { margin-bottom: 12px; }
+  .chart-bar-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .chart-bar-name { font-weight: 500; }
+  .chart-bar-val { font-family: var(--mono); font-weight: 600; }
+  .chart-bar-track { height: 8px; background: var(--surface); border-radius: 4px; overflow: hidden; }
+  .chart-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+
+  /* Donut */
+  .donut-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
+
+  /* Weekly chart */
+  .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .week-btn {
+    background: var(--surface); border: none; color: var(--text); padding: 8px 14px;
+    border-radius: 8px; cursor: pointer; font-family: var(--font); font-weight: 600; font-size: 14px;
+  }
+  .week-btn:active { background: var(--surface2); }
+  .week-label { font-size: 14px; font-weight: 600; }
+  .stacked-chart { display: flex; align-items: flex-end; gap: 6px; height: 200px; padding: 0 2px; margin-bottom: 8px; }
+  .stacked-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; cursor: pointer; }
+  .stacked-bar { width: 100%; border-radius: 6px 6px 0 0; overflow: hidden; display: flex; flex-direction: column-reverse; }
+  .stacked-seg { width: 100%; min-height: 2px; }
+  .day-labels { display: flex; gap: 6px; padding: 0 2px; }
+  .day-label { flex: 1; text-align: center; font-size: 11px; font-weight: 500; color: var(--text3); }
+  .day-label.today { color: var(--accent); font-weight: 700; }
+
+  /* Week totals */
+  .week-totals { margin-top: 24px; }
+  .week-total-item {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    background: var(--surface); border-radius: 10px; margin-bottom: 6px;
+  }
+  .week-total-icon { font-size: 16px; }
+  .week-total-label { flex: 1; font-size: 13px; font-weight: 500; }
+  .week-total-pct { font-size: 12px; color: var(--text3); font-family: var(--mono); }
+  .week-total-val { font-size: 14px; font-weight: 600; font-family: var(--mono); min-width: 50px; text-align: right; }
+
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text3); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+  /* Toast */
+  .toast-wrap {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100;
+    animation: fadeUp 0.25s ease;
+  }
+  .toast {
+    padding: 10px 20px; border-radius: 10px; font-size: 14px; font-weight: 600;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+  .toast-success { background: var(--success); color: #0a0f1e; }
+  .toast-error { background: var(--danger); color: #fff; }
+
+  /* CSV button */
+  .btn-csv {
+    width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text2); font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: var(--font); margin-top: 24px; transition: all 0.2s;
+  }
+  .btn-csv:active { background: var(--surface2); }
+
+  /* Empty state */
+  .empty { padding: 40px 20px; text-align: center; color: var(--text3); font-size: 14px; }
+
+  /* Syncing indicator */
+  .syncing { font-size: 11px; color: var(--text3); text-align: center; padding: 8px; animation: pulse 1s infinite; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ============================================
+// CONFIG
+// ============================================
+const STORAGE_KEY = "tt_script_url";
+const CATEGORIES = [
+  { id: "work", label: "Work", color: "#3b82f6", icon: "💼" },
+  { id: "exercise", label: "Exercise", color: "#22c55e", icon: "🏋️" },
+  { id: "personal", label: "Personal / Social", color: "#f43f5e", icon: "👥" },
+  { id: "side_projects", label: "Side Projects", color: "#a855f7", icon: "🛠️" },
+  { id: "learning", label: "Learning / Research", color: "#06b6d4", icon: "📚" },
+  { id: "sleep", label: "Sleep", color: "#6366f1", icon: "😴" },
+  { id: "transit", label: "Transit", color: "#eab308", icon: "🚆" },
+  { id: "chores", label: "House Chores", color: "#f97316", icon: "🏠" },
+  { id: "tv", label: "TV", color: "#ec4899", icon: "📺" },
+  { id: "other", label: "Other", color: "#64748b", icon: "📌" },
+];
+const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+const MAX_HOURS = 24;
+const DAY_LABELS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+// ============================================
+// STATE
+// ============================================
+let state = {
+  scriptUrl: localStorage.getItem(STORAGE_KEY) || "",
+  connected: false,
+  connecting: false,
+  entries: [],
+  view: "log",
+  selectedDate: todayKey(),
+  weekOffset: 0,
+  selectedCategory: null,
+  entryMode: "duration", // duration | timeblock
+  hours: "", minutes: "",
+  startTime: "", endTime: "",
+  editingId: null,
+  toast: null,
+  syncing: false,
+};
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function formatDur(hrs) {
+  const h = Math.floor(hrs);
+  const m = Math.round((hrs - h) * 60);
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+function dayTotal(dateKey) {
+  return state.entries.filter(e => e.date === dateKey).reduce((s,e) => s + e.duration, 0);
+}
+
+function getWeekDates(offset) {
+  const now = new Date();
+  const day = now.getDay();
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - ((day+6)%7) + offset*7);
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(mon);
+    d.setDate(mon.getDate()+i);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  });
+}
+
+function formatDateLabel(dk) {
+  const d = new Date(dk + "T00:00:00");
+  return d.toLocaleDateString("en-AU", { weekday:"short", day:"numeric", month:"short" });
+}
+
+function weekLabel(dates) {
+  const s = new Date(dates[0]+"T00:00:00");
+  const e = new Date(dates[6]+"T00:00:00");
+  const fmt = d => d.toLocaleDateString("en-AU", {day:"numeric", month:"short"});
+  return `${fmt(s)} – ${fmt(e)}`;
+}
+
+// ============================================
+// API HELPERS
+// ============================================
+async function apiGet(action) {
+  const res = await fetch(`${state.scriptUrl}?action=${action}`);
+  return res.json();
+}
+
+async function apiPost(data) {
+  const res = await fetch(state.scriptUrl, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+async function loadEntries() {
+  try {
+    state.syncing = true; render();
+    const data = await apiGet("getAll");
+    if (data.entries) {
+      state.entries = data.entries.map(e => ({
+        ...e,
+        duration: parseFloat(e.duration) || 0,
+        createdAt: parseInt(e.createdAt) || Date.now()
+      }));
+    }
+    state.syncing = false;
+  } catch(err) {
+    state.syncing = false;
+    showToast("Failed to load data", "error");
+  }
+  render();
+}
+
+async function syncAdd(entry) {
+  try {
+    await apiPost({ action: "add", entry });
+  } catch { showToast("Sync failed — retry", "error"); }
+}
+
+async function syncUpdate(entry) {
+  try {
+    await apiPost({ action: "update", entry });
+  } catch { showToast("Sync failed — retry", "error"); }
+}
+
+async function syncDelete(id) {
+  try {
+    await apiPost({ action: "delete", id });
+  } catch { showToast("Sync failed — retry", "error"); }
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+function showToast(msg, type="error") {
+  state.toast = { msg, type };
+  render();
+  setTimeout(() => { state.toast = null; render(); }, 2500);
+}
+
+async function connectSheet() {
+  const input = document.getElementById("setup-url");
+  const url = (input?.value || "").trim();
+  if (!url.startsWith("https://script.google.com/")) {
+    showToast("Invalid URL — must start with https://script.google.com/");
+    return;
+  }
+  state.scriptUrl = url;
+  state.connecting = true;
+  render();
+  try {
+    const data = await apiGet("ping");
+    if (data.status === "ok") {
+      localStorage.setItem(STORAGE_KEY, url);
+      state.connected = true;
+      state.connecting = false;
+      await loadEntries();
+    } else {
+      throw new Error("bad response");
+    }
+  } catch {
+    state.connecting = false;
+    showToast("Could not connect — check the URL and deploy settings");
+    render();
+  }
+}
+
+function disconnectSheet() {
+  localStorage.removeItem(STORAGE_KEY);
+  state.scriptUrl = "";
+  state.connected = false;
+  state.entries = [];
+  render();
+}
+
+function calcTimeBlockDuration(startTime, endTime, dateKey) {
+  // Parse times
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  const startMins = sh * 60 + sm;
+  let endMins = eh * 60 + em;
+
+  // If end <= start, it crosses midnight
+  const crossesMidnight = endMins <= startMins;
+
+  if (crossesMidnight) {
+    // Day 1: startTime to midnight
+    const day1Mins = 1440 - startMins;
+    // Day 2: midnight to endTime
+    const day2Mins = endMins;
+
+    // Next day date
+    const d = new Date(dateKey + "T00:00:00");
+    d.setDate(d.getDate() + 1);
+    const nextDateKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+
+    return [
+      { date: dateKey, duration: day1Mins / 60, startTime, endTime: "23:59" },
+      { date: nextDateKey, duration: day2Mins / 60, startTime: "00:00", endTime },
+    ];
+  } else {
+    return [
+      { date: dateKey, duration: (endMins - startMins) / 60, startTime, endTime },
+    ];
+  }
+}
+
+async function addEntry() {
+  if (!state.selectedCategory) return showToast("Pick a category");
+
+  if (state.entryMode === "timeblock") {
+    if (!state.startTime || !state.endTime) return showToast("Set start and end time");
+    if (state.startTime === state.endTime) return showToast("Start and end can't be the same");
+
+    const blocks = calcTimeBlockDuration(state.startTime, state.endTime, state.selectedDate);
+
+    // Check 24h cap for each day
+    for (const block of blocks) {
+      const existing = dayTotal(block.date);
+      // If editing, subtract the old entry's contribution to this date
+      let editAdj = 0;
+      if (state.editingId) {
+        editAdj = state.entries.filter(e => e.id === state.editingId && e.date === block.date)
+          .reduce((s,e) => s + e.duration, 0);
+      }
+      if (existing - editAdj + block.duration > MAX_HOURS + 0.01) {
+        return showToast(`Only ${formatDur(Math.max(0, MAX_HOURS - existing + editAdj))} left on ${block.date}`);
+      }
+    }
+
+    if (state.editingId) {
+      // Delete old, add new blocks
+      state.entries = state.entries.filter(e => e.id !== state.editingId);
+      await syncDelete(state.editingId);
+      state.editingId = null;
+    }
+
+    for (const block of blocks) {
+      if (block.duration <= 0) continue;
+      const entry = {
+        id: uid(),
+        category: state.selectedCategory,
+        date: block.date,
+        duration: Math.round(block.duration * 1000) / 1000,
+        startTime: block.startTime,
+        endTime: block.endTime,
+        createdAt: Date.now(),
+      };
+      state.entries.push(entry);
+      await syncAdd(entry);
+    }
+  } else {
+    const h = parseFloat(state.hours) || 0;
+    const m = parseFloat(state.minutes) || 0;
+    const dur = h + m / 60;
+    if (dur <= 0) return showToast("Enter a duration");
+
+    const existing = dayTotal(state.selectedDate);
+    let editAdj = 0;
+    if (state.editingId) {
+      editAdj = state.entries.filter(e => e.id === state.editingId).reduce((s,e) => s + e.duration, 0);
+    }
+    if (existing - editAdj + dur > MAX_HOURS + 0.01) {
+      return showToast(`Only ${formatDur(Math.max(0, MAX_HOURS - existing + editAdj))} left on ${state.selectedDate}`);
+    }
+
+    if (state.editingId) {
+      const entry = state.entries.find(e => e.id === state.editingId);
+      if (entry) {
+        entry.category = state.selectedCategory;
+        entry.duration = dur;
+        entry.date = state.selectedDate;
+        entry.startTime = "";
+        entry.endTime = "";
+        await syncUpdate(entry);
+      }
+      state.editingId = null;
+    } else {
+      const entry = {
+        id: uid(),
+        category: state.selectedCategory,
+        date: state.selectedDate,
+        duration: dur,
+        startTime: "",
+        endTime: "",
+        createdAt: Date.now(),
+      };
+      state.entries.push(entry);
+      await syncAdd(entry);
+    }
+  }
+
+  state.selectedCategory = null;
+  state.hours = ""; state.minutes = "";
+  state.startTime = ""; state.endTime = "";
+  showToast("Entry saved", "success");
+  render();
+}
+
+async function deleteEntry(id) {
+  state.entries = state.entries.filter(e => e.id !== id);
+  if (state.editingId === id) cancelEdit();
+  await syncDelete(id);
+  showToast("Deleted", "success");
+  render();
+}
+
+function startEdit(entry) {
+  state.editingId = entry.id;
+  state.selectedCategory = entry.category;
+  state.selectedDate = entry.date;
+  if (entry.startTime && entry.endTime) {
+    state.entryMode = "timeblock";
+    state.startTime = entry.startTime;
+    state.endTime = entry.endTime;
+  } else {
+    state.entryMode = "duration";
+    const h = Math.floor(entry.duration);
+    const m = Math.round((entry.duration - h) * 60);
+    state.hours = h > 0 ? String(h) : "";
+    state.minutes = m > 0 ? String(m) : "";
+  }
+  state.view = "log";
+  render();
+  document.querySelector('.app')?.scrollTo(0, 0);
+}
+
+function cancelEdit() {
+  state.editingId = null;
+  state.selectedCategory = null;
+  state.hours = ""; state.minutes = "";
+  state.startTime = ""; state.endTime = "";
+  render();
+}
+
+function exportCSV() {
+  const rows = [["date","category","duration_hours","start_time","end_time"]];
+  const sorted = [...state.entries].sort((a,b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+  sorted.forEach(e => {
+    rows.push([e.date, CAT_MAP[e.category]?.label || e.category, e.duration.toFixed(2), e.startTime || "", e.endTime || ""]);
+  });
+  const csv = rows.map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `time-tracker-${todayKey()}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================
+// RENDER
+// ============================================
+function render() {
+  const app = document.getElementById("app");
+
+  // Setup overlay
+  if (!state.connected) {
+    app.innerHTML = `
+      <div class="setup-overlay">
+        <div class="setup-card fade-up">
+          <h2>⏱ Time Tracker</h2>
+          <p>Paste your Google Apps Script web app URL to connect your spreadsheet.</p>
+          <input type="text" id="setup-url" placeholder="https://script.google.com/macros/s/..." value="${state.scriptUrl}">
+          <button class="btn-connect" onclick="connectSheet()" ${state.connecting ? 'disabled' : ''}>
+            ${state.connecting ? 'Connecting...' : 'Connect'}
+          </button>
+        </div>
+      </div>
+      ${renderToast()}
+    `;
+    return;
+  }
+
+  const remaining = MAX_HOURS - dayTotal(state.selectedDate);
+  const remColor = remaining > 4 ? "var(--success)" : remaining > 1 ? "#eab308" : "var(--danger)";
+  const remBg = remaining > 4 ? "rgba(34,197,94,0.1)" : remaining > 1 ? "rgba(234,179,8,0.1)" : "rgba(239,68,68,0.1)";
+  const remBorder = remaining > 4 ? "rgba(34,197,94,0.25)" : remaining > 1 ? "rgba(234,179,8,0.25)" : "rgba(239,68,68,0.25)";
+
+  app.innerHTML = `
+    <div class="header">
+      <h1>Time Tracker</h1>
+      <div class="connection">
+        <span class="dot dot-ok"></span> Connected to Google Sheets
+        <span style="margin-left:auto;cursor:pointer;color:var(--text3);font-size:11px;" onclick="disconnectSheet()">Disconnect</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab ${state.view==='log'?'active':''}" onclick="state.view='log';render()">Log</button>
+      <button class="tab ${state.view==='daily'?'active':''}" onclick="state.view='daily';render()">Daily</button>
+      <button class="tab ${state.view==='weekly'?'active':''}" onclick="state.view='weekly';render()">Weekly</button>
+    </div>
+
+    ${state.view === 'log' ? renderLog(remaining, remColor, remBg, remBorder) : ''}
+    ${state.view === 'daily' ? renderDaily() : ''}
+    ${state.view === 'weekly' ? renderWeekly() : ''}
+
+    <button class="btn-csv" onclick="exportCSV()">📥 Export All Data as CSV</button>
+
+    ${state.syncing ? '<div class="syncing">Syncing...</div>' : ''}
+    ${renderToast()}
+  `;
+}
+
+function renderToast() {
+  if (!state.toast) return '';
+  return `<div class="toast-wrap"><div class="toast toast-${state.toast.type==='success'?'success':'error'}">${state.toast.msg}</div></div>`;
+}
+
+function renderLog(remaining, remColor, remBg, remBorder) {
+  const dayEntries = state.entries
+    .filter(e => e.date === state.selectedDate)
+    .sort((a,b) => b.createdAt - a.createdAt);
+
+  return `
+    <div class="fade-in">
+      <div class="date-row">
+        <input type="date" class="date-input" value="${state.selectedDate}" onchange="state.selectedDate=this.value;render()">
+        <div class="remaining-badge" style="color:${remColor};background:${remBg};border:1px solid ${remBorder}">
+          ${formatDur(Math.max(0,remaining))} left
+        </div>
+      </div>
+
+      <div class="cat-grid">
+        ${CATEGORIES.map(c => `
+          <div class="cat-btn ${state.selectedCategory===c.id?'selected':''}" style="${state.selectedCategory===c.id?`border-color:${c.color};background:${c.color}18`:''}" onclick="state.selectedCategory=state.selectedCategory==='${c.id}'?null:'${c.id}';render()">
+            <div class="icon">${c.icon}</div>
+            <div class="label" style="${state.selectedCategory===c.id?`color:${c.color}`:''}">${c.label}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="mode-toggle">
+        <button class="mode-btn ${state.entryMode==='duration'?'active':''}" onclick="state.entryMode='duration';render()">Duration</button>
+        <button class="mode-btn ${state.entryMode==='timeblock'?'active':''}" onclick="state.entryMode='timeblock';render()">Time Block</button>
+      </div>
+
+      ${state.entryMode === 'duration' ? `
+        <div class="input-row">
+          <div class="dur-input-wrap">
+            <input type="number" min="0" max="24" placeholder="0" class="dur-input" value="${state.hours}" oninput="state.hours=this.value">
+            <span class="dur-suffix">hr</span>
+          </div>
+          <div class="dur-input-wrap">
+            <input type="number" min="0" max="59" placeholder="0" class="dur-input" value="${state.minutes}" oninput="state.minutes=this.value">
+            <span class="dur-suffix">min</span>
+          </div>
+          <button class="btn-add" onclick="addEntry()">${state.editingId?'Update':'Add'}</button>
+          ${state.editingId?'<button class="btn-cancel" onclick="cancelEdit()">✕</button>':''}
+        </div>
+      ` : `
+        <div class="input-row">
+          <input type="time" class="time-input" value="${state.startTime}" onchange="state.startTime=this.value">
+          <div class="time-arrow">→</div>
+          <input type="time" class="time-input" value="${state.endTime}" onchange="state.endTime=this.value">
+          <button class="btn-add" onclick="addEntry()">${state.editingId?'Update':'Add'}</button>
+          ${state.editingId?'<button class="btn-cancel" onclick="cancelEdit()">✕</button>':''}
+        </div>
+      `}
+
+      <div class="section-title">Entries — ${formatDateLabel(state.selectedDate)}</div>
+
+      ${dayEntries.length === 0 ? '<div class="empty">No entries yet. Pick a category and log some time.</div>' :
+        dayEntries.map(e => {
+          const c = CAT_MAP[e.category] || CATEGORIES[9];
+          return `
+            <div class="entry-item" style="border-left-color:${c.color}">
+              <span class="entry-icon">${c.icon}</span>
+              <div style="flex:1">
+                <div class="entry-label">${c.label}</div>
+                ${e.startTime && e.endTime ? `<div class="entry-time-info">${e.startTime} → ${e.endTime}</div>` : ''}
+              </div>
+              <span class="entry-dur" style="color:${c.color}">${formatDur(e.duration)}</span>
+              <button class="entry-action" onclick="startEdit(state.entries.find(x=>x.id==='${e.id}'))">✏️</button>
+              <button class="entry-action" onclick="deleteEntry('${e.id}')">🗑️</button>
+            </div>
+          `;
+        }).join('')
+      }
+
+      ${dayEntries.length > 0 ? `
+        <div class="day-bar-wrap">
+          <div class="day-bar-label">
+            <span>Day Total</span>
+            <span style="font-family:var(--mono)">${formatDur(dayTotal(state.selectedDate))} / 24h</span>
+          </div>
+          <div class="day-bar">
+            ${CATEGORIES.map(c => {
+              const hrs = dayEntries.filter(e=>e.category===c.id).reduce((s,e)=>s+e.duration,0);
+              if (hrs === 0) return '';
+              return `<div class="day-bar-seg" style="width:${(hrs/MAX_HOURS)*100}%;background:${c.color}"></div>`;
+            }).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+function renderDaily() {
+  const totals = {};
+  state.entries.filter(e=>e.date===state.selectedDate).forEach(e => {
+    totals[e.category] = (totals[e.category]||0) + e.duration;
+  });
+  const sorted = CATEGORIES.filter(c=>totals[c.id]).sort((a,b)=>totals[b.id]-totals[a.id]);
+  const total = Object.values(totals).reduce((s,v)=>s+v,0);
+  const maxVal = sorted.length ? Math.max(...sorted.map(c=>totals[c.id])) : 0;
+
+  let donut = '';
+  if (sorted.length > 0) {
+    let paths = '';
+    let cum = -90;
+    sorted.forEach(c => {
+      const pct = totals[c.id] / total;
+      const angle = pct * 360;
+      const s = (Math.PI/180) * cum;
+      const e = (Math.PI/180) * (cum + angle);
+      const r = 70, cx = 90, cy = 90;
+      paths += `<path d="M ${cx} ${cy} L ${cx+r*Math.cos(s)} ${cy+r*Math.sin(s)} A ${r} ${r} 0 ${angle>180?1:0} 1 ${cx+r*Math.cos(e)} ${cy+r*Math.sin(e)} Z" fill="${c.color}" stroke="#0a0f1e" stroke-width="2"/>`;
+      cum += angle;
+    });
+    donut = `
+      <div class="donut-wrap">
+        <svg width="180" height="180" viewBox="0 0 180 180">
+          ${paths}
+          <circle cx="90" cy="90" r="42" fill="var(--bg)"/>
+          <text x="90" y="85" text-anchor="middle" fill="var(--text)" font-size="18" font-weight="700" font-family="var(--mono)">${formatDur(total)}</text>
+          <text x="90" y="102" text-anchor="middle" fill="var(--text3)" font-size="11" font-family="var(--font)">logged</text>
+        </svg>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="fade-in">
+      <div class="date-row">
+        <input type="date" class="date-input" value="${state.selectedDate}" onchange="state.selectedDate=this.value;render()">
+      </div>
+      ${sorted.length === 0 ? '<div class="empty">No data for this day</div>' : `
+        ${donut}
+        ${sorted.map(c => `
+          <div class="chart-bar-item">
+            <div class="chart-bar-header">
+              <span class="chart-bar-name">${c.icon} ${c.label}</span>
+              <span class="chart-bar-val" style="color:${c.color}">${formatDur(totals[c.id])}</span>
+            </div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill" style="width:${(totals[c.id]/maxVal)*100}%;background:${c.color}"></div>
+            </div>
+          </div>
+        `).join('')}
+      `}
+    </div>
+  `;
+}
+
+function renderWeekly() {
+  const dates = getWeekDates(state.weekOffset);
+  const wData = dates.map(dk => {
+    const totals = {};
+    state.entries.filter(e=>e.date===dk).forEach(e => { totals[e.category]=(totals[e.category]||0)+e.duration; });
+    return { date: dk, totals };
+  });
+
+  const weekTotals = {};
+  dates.forEach(dk => {
+    state.entries.filter(e=>e.date===dk).forEach(e => {
+      weekTotals[e.category] = (weekTotals[e.category]||0) + e.duration;
+    });
+  });
+  const sortedCats = CATEGORIES.filter(c=>weekTotals[c.id]).sort((a,b)=>weekTotals[b.id]-weekTotals[a.id]);
+  const weekTotal = Object.values(weekTotals).reduce((s,v)=>s+v,0);
+
+  return `
+    <div class="fade-in">
+      <div class="week-nav">
+        <button class="week-btn" onclick="state.weekOffset--;render()">◀</button>
+        <span class="week-label">${weekLabel(dates)}</span>
+        <button class="week-btn" onclick="state.weekOffset++;render()">▶</button>
+      </div>
+
+      <div class="stacked-chart">
+        ${wData.map((day,i) => {
+          const total = Object.values(day.totals).reduce((s,v)=>s+v,0);
+          const heightPct = total > 0 ? (total/MAX_HOURS)*100 : 0;
+          let segs = '';
+          CATEGORIES.forEach(c => {
+            const hrs = day.totals[c.id] || 0;
+            if (hrs > 0) segs += `<div class="stacked-seg" style="flex-grow:${hrs};background:${c.color}"></div>`;
+          });
+          return `
+            <div class="stacked-col" onclick="state.selectedDate='${day.date}';state.view='daily';render()">
+              <div class="stacked-bar" style="height:${heightPct}%;${total>0?'min-height:4px':''}">
+                ${segs}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+      <div class="day-labels">
+        ${dates.map((dk,i) => `<div class="day-label ${dk===todayKey()?'today':''}">${DAY_LABELS[i]}</div>`).join('')}
+      </div>
+
+      ${sortedCats.length === 0 ? '<div class="empty" style="margin-top:20px">No data this week</div>' : `
+        <div class="week-totals">
+          <div class="section-title">Week Total — ${formatDur(weekTotal)}</div>
+          ${sortedCats.map(c => {
+            const pct = ((weekTotals[c.id]/weekTotal)*100).toFixed(0);
+            return `
+              <div class="week-total-item">
+                <span class="week-total-icon">${c.icon}</span>
+                <span class="week-total-label">${c.label}</span>
+                <span class="week-total-pct">${pct}%</span>
+                <span class="week-total-val" style="color:${c.color}">${formatDur(weekTotals[c.id])}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `}
+
+      <div class="legend">
+        ${CATEGORIES.map(c => `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div>${c.label}</div>`).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================
+// INIT
+// ============================================
+async function init() {
+  if (state.scriptUrl) {
+    state.connecting = true;
+    render();
+    try {
+      const data = await apiGet("ping");
+      if (data.status === "ok") {
+        state.connected = true;
+        state.connecting = false;
+        await loadEntries();
+      } else {
+        state.connecting = false;
+        render();
+      }
+    } catch {
+      state.connecting = false;
+      render();
+    }
+  } else {
+    render();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
