@@ -353,12 +353,11 @@ async function apiPost(data) {
 
 function parseSheetDate(d) {
   if (!d || d === '') return '';
-  if (typeof d === 'string' && d.includes('T')) {
-    // Google Sheets returns dates as ISO datetime — convert to local YYYY-MM-DD
-    const date = new Date(d);
-    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
-  }
-  return String(d).slice(0, 10);
+  // Just extract YYYY-MM-DD from the string directly to avoid timezone shifts
+  const str = String(d);
+  const match = str.match(/(\d{4}-\d{2}-\d{2})/);
+  if (match) return match[1];
+  return str.slice(0, 10);
 }
 
 function parseSheetTime(t) {
@@ -369,8 +368,9 @@ function parseSheetTime(t) {
     return `${String(date.getUTCHours()).padStart(2,"0")}:${String(date.getUTCMinutes()).padStart(2,"0")}`;
   }
   if (typeof t === 'string' && t.includes('T')) {
-    const date = new Date(t);
-    return `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+    // Extract time from ISO string directly to avoid timezone shifts
+    const match = t.match(/T(\d{2}:\d{2})/);
+    if (match) return match[1];
   }
   return String(t);
 }
