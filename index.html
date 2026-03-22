@@ -351,6 +351,30 @@ async function apiPost(data) {
   return res.json();
 }
 
+function parseSheetDate(d) {
+  if (!d || d === '') return '';
+  if (typeof d === 'string' && d.includes('T')) {
+    // Google Sheets returns dates as ISO datetime — convert to local YYYY-MM-DD
+    const date = new Date(d);
+    return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+  }
+  return String(d).slice(0, 10);
+}
+
+function parseSheetTime(t) {
+  if (!t || t === '') return '';
+  if (typeof t === 'string' && t.includes('1899')) {
+    // Google Sheets time epoch — extract UTC hours/mins
+    const date = new Date(t);
+    return `${String(date.getUTCHours()).padStart(2,"0")}:${String(date.getUTCMinutes()).padStart(2,"0")}`;
+  }
+  if (typeof t === 'string' && t.includes('T')) {
+    const date = new Date(t);
+    return `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}`;
+  }
+  return String(t);
+}
+
 async function loadEntries() {
   try {
     state.syncing = true; render();
@@ -358,6 +382,9 @@ async function loadEntries() {
     if (data.entries) {
       state.entries = data.entries.map(e => ({
         ...e,
+        date: parseSheetDate(e.date),
+        startTime: parseSheetTime(e.startTime),
+        endTime: parseSheetTime(e.endTime),
         duration: parseFloat(e.duration) || 0,
         createdAt: parseInt(e.createdAt) || Date.now()
       }));
