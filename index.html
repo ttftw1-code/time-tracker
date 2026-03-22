@@ -252,11 +252,16 @@ const STORAGE_KEY = "tt_script_url";
 const CATEGORIES = [
   { id: "work", label: "Work", color: "#3b82f6", icon: "💼" },
   { id: "exercise", label: "Exercise", color: "#22c55e", icon: "🏋️" },
-  { id: "personal", label: "Personal / Social", color: "#f43f5e", icon: "👥" },
+  { id: "friends", label: "Friends", color: "#f43f5e", icon: "👯" },
+  { id: "dating", label: "Dating", color: "#e11d48", icon: "❤️" },
+  { id: "personal", label: "Personal", color: "#fb7185", icon: "🙋" },
+  { id: "family", label: "Family", color: "#d946ef", icon: "👨‍👩‍👦" },
   { id: "side_projects", label: "Side Projects", color: "#a855f7", icon: "🛠️" },
   { id: "learning", label: "Learning / Research", color: "#06b6d4", icon: "📚" },
   { id: "sleep", label: "Sleep", color: "#6366f1", icon: "😴" },
   { id: "transit", label: "Transit", color: "#eab308", icon: "🚆" },
+  { id: "eating", label: "Eating", color: "#f59e0b", icon: "🍽️" },
+  { id: "getting_ready", label: "Getting Ready", color: "#14b8a6", icon: "🚿" },
   { id: "chores", label: "House Chores", color: "#f97316", icon: "🏠" },
   { id: "tv", label: "TV", color: "#ec4899", icon: "📺" },
   { id: "other", label: "Other", color: "#64748b", icon: "📌" },
@@ -716,7 +721,7 @@ function renderLog(remaining, remColor, remBg, remBorder) {
 
       ${dayEntries.length === 0 ? '<div class="empty">No entries yet. Pick a category and log some time.</div>' :
         dayEntries.map(e => {
-          const c = CAT_MAP[e.category] || CATEGORIES[9];
+          const c = CAT_MAP[e.category] || CATEGORIES[CATEGORIES.length-1];
           return `
             <div class="entry-item" style="border-left-color:${c.color}">
               <span class="entry-icon">${c.icon}</span>
