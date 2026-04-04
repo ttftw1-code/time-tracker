@@ -699,7 +699,15 @@ function renderToast() {
 function renderLog(remaining, remColor, remBg, remBorder) {
   const dayEntries = state.entries
     .filter(e => e.date === state.selectedDate)
-    .sort((a,b) => b.createdAt - a.createdAt);
+    .sort((a,b) => {
+      // Sort by start time if available, otherwise by createdAt
+      const aTime = a.startTime || '';
+      const bTime = b.startTime || '';
+      if (aTime && bTime) return bTime.localeCompare(aTime);
+      if (aTime) return -1;
+      if (bTime) return 1;
+      return b.createdAt - a.createdAt;
+    });
 
   return `
     <div class="fade-in">
