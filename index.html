@@ -36,7 +36,7 @@
   .fade-in { animation: fadeIn 0.25s ease both; }
 
   /* App shell */
-  .app { max-width: 480px; margin: 0 auto; padding: 16px 16px 100px; position: relative; }
+  .app { max-width: 480px; margin: 0 auto; padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 110px); position: relative; }
   .header { padding: 12px 0 20px; }
   .header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #e8edf5, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .header .sub { font-size: 13px; color: var(--text3); margin-top: 2px; font-weight: 400; }
@@ -71,6 +71,30 @@
   }
   .setup-card .btn-connect:active { background: #2563eb; }
 
+  /* Section Nav (fixed bottom bar) */
+  .section-nav-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    background: rgba(10,15,30,0.85); backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 8px 16px calc(env(safe-area-inset-bottom, 8px) + 8px);
+  }
+  .section-nav-inner {
+    max-width: 480px; margin: 0 auto;
+    display: flex; gap: 4px; background: var(--surface); border-radius: 14px; padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .section-btn {
+    flex: 1; padding: 12px 0; border: none; border-radius: 11px; cursor: pointer;
+    font-size: 14px; font-weight: 700; transition: all 0.25s;
+    background: transparent; color: var(--text3); letter-spacing: 0.3px;
+    font-family: var(--font);
+  }
+  .section-btn.active {
+    background: linear-gradient(135deg, var(--accent), #2563eb);
+    color: #fff; box-shadow: 0 2px 12px rgba(59,130,246,0.25);
+  }
+
   /* Tabs */
   .tabs {
     display: flex; gap: 3px; background: var(--surface); border-radius: 12px; padding: 3px; margin-bottom: 18px;
@@ -81,6 +105,78 @@
     background: transparent; color: var(--text3);
   }
   .tab.active { background: var(--accent); color: #fff; }
+
+  /* Ratings */
+  .rating-block { margin-bottom: 20px; }
+  .rating-block-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+  }
+  .rating-block-icon { font-size: 18px; }
+  .rating-block-title { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+  .rating-levels {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+  }
+  .rating-level-btn {
+    padding: 10px 4px; border: 1.5px solid var(--border); border-radius: 10px;
+    cursor: pointer; text-align: center; background: var(--surface);
+    color: var(--text2); font-size: 10.5px; font-weight: 600; line-height: 1.2;
+    transition: all 0.15s; font-family: var(--font);
+  }
+  .rating-level-btn.selected {
+    color: #fff;
+  }
+  .rating-level-num {
+    font-family: var(--mono); font-size: 9px; opacity: 0.55; margin-bottom: 2px;
+  }
+  .btn-submit-rating {
+    width: 100%; padding: 14px; background: var(--accent); color: #fff; border: none;
+    border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer;
+    margin-top: 8px; font-family: var(--font); transition: background 0.2s;
+  }
+  .btn-submit-rating:active { background: #2563eb; }
+
+  /* Trends chart */
+  .range-nav {
+    display: flex; gap: 3px; background: var(--surface); border-radius: 10px;
+    padding: 3px; margin-bottom: 16px;
+  }
+  .range-btn {
+    flex: 1; padding: 8px 0; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 12px; font-weight: 600; background: transparent; color: var(--text3);
+    transition: all 0.2s;
+  }
+  .range-btn.active { background: var(--surface3); color: var(--text); }
+
+  .metric-toggles {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
+  }
+  .metric-toggle {
+    display: flex; align-items: center; gap: 5px; padding: 6px 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+    cursor: pointer; font-size: 11px; font-weight: 600; color: var(--text2);
+    transition: all 0.15s;
+  }
+  .metric-toggle.active { color: var(--text); border-color: currentColor; }
+  .metric-toggle.hidden { opacity: 0.4; }
+  .metric-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .trends-chart { background: var(--surface); border-radius: 14px; padding: 14px; margin-bottom: 16px; }
+  .trends-svg { width: 100%; height: 240px; overflow: visible; }
+  .trends-line { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .trends-point { stroke-width: 2; }
+  .trends-axis-label { fill: var(--text3); font-family: var(--mono); font-size: 10px; }
+  .trends-grid-line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.5; }
+
+  .trends-summary {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px;
+  }
+  .trends-summary-card {
+    background: var(--surface); border-radius: 12px; padding: 12px;
+    border-left: 3px solid var(--accent);
+  }
+  .trends-summary-label { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .trends-summary-value { font-size: 22px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+  .trends-summary-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
 
   /* Date picker row */
   .date-row {
@@ -298,6 +394,37 @@ const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 const MAX_HOURS = 24;
 const DAY_LABELS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
+const RATINGS_CONFIG = [
+  {
+    id: "stress",
+    label: "Stress",
+    color: "#ef4444",
+    icon: "🔥",
+    levels: ["Calm","Mild","Moderate","Intense","Overwhelmed"]
+  },
+  {
+    id: "effort",
+    label: "Effort",
+    color: "#f59e0b",
+    icon: "💪",
+    levels: ["Coasted","Cruised","Solid","Pushed Hard","Maxed Out"]
+  },
+  {
+    id: "satisfaction",
+    label: "Satisfaction",
+    color: "#22c55e",
+    icon: "😊",
+    levels: ["Disappointed","So-So","Content","Pleased","Fulfilled"]
+  },
+  {
+    id: "productivity",
+    label: "Productivity",
+    color: "#3b82f6",
+    icon: "⚡",
+    levels: ["Nothing Done","Slow Day","Ticked Along","Got Stuff Done","Dialled"]
+  }
+];
+
 // ============================================
 // STATE
 // ============================================
@@ -306,7 +433,14 @@ let state = {
   connected: false,
   connecting: false,
   entries: [],
+  ratings: [],
+  section: "tracker", // tracker | ratings
   view: "log",
+  ratingsView: "log", // log | trends
+  ratingsRange: 30, // 7 | 30 | 90
+  ratingsSelections: { stress: null, effort: null, satisfaction: null, productivity: null },
+  ratingsDate: "",
+  visibleMetrics: { stress: true, effort: true, satisfaction: true, productivity: true },
   selectedDate: todayKey(),
   weekOffset: 0,
   selectedCategory: null,
@@ -443,6 +577,30 @@ async function syncDelete(id) {
   } catch { showToast("Sync failed — retry", "error"); }
 }
 
+async function loadRatings() {
+  try {
+    const data = await apiGet("getRatings");
+    if (data.ratings) {
+      state.ratings = data.ratings.map(r => ({
+        date: parseSheetDate(r.date),
+        stress: parseInt(r.stress) || 0,
+        effort: parseInt(r.effort) || 0,
+        satisfaction: parseInt(r.satisfaction) || 0,
+        productivity: parseInt(r.productivity) || 0,
+        createdAt: parseInt(r.createdAt) || Date.now()
+      }));
+    }
+  } catch(err) {
+    // Silently fail — ratings sheet may not exist yet
+  }
+}
+
+async function saveRating(rating) {
+  try {
+    await apiPost({ action: "saveRating", rating });
+  } catch { showToast("Sync failed — retry", "error"); }
+}
+
 // ============================================
 // ACTIONS
 // ============================================
@@ -469,6 +627,8 @@ async function connectSheet() {
       state.connected = true;
       state.connecting = false;
       await loadEntries();
+      await loadRatings();
+      render();
     } else {
       throw new Error("bad response");
     }
@@ -647,6 +807,53 @@ function cancelEdit() {
   render();
 }
 
+function loadRatingForDate(dateKey) {
+  const existing = state.ratings.find(r => r.date === dateKey);
+  if (existing) {
+    state.ratingsSelections = {
+      stress: existing.stress || null,
+      effort: existing.effort || null,
+      satisfaction: existing.satisfaction || null,
+      productivity: existing.productivity || null,
+    };
+  } else {
+    state.ratingsSelections = { stress: null, effort: null, satisfaction: null, productivity: null };
+  }
+}
+
+function selectRating(metricId, level) {
+  if (state.ratingsSelections[metricId] === level) {
+    state.ratingsSelections[metricId] = null;
+  } else {
+    state.ratingsSelections[metricId] = level;
+  }
+  render();
+}
+
+async function submitRating() {
+  const sel = state.ratingsSelections;
+  if (!sel.stress && !sel.effort && !sel.satisfaction && !sel.productivity) {
+    return showToast("Select at least one rating");
+  }
+
+  const rating = {
+    date: state.ratingsDate,
+    stress: sel.stress || 0,
+    effort: sel.effort || 0,
+    satisfaction: sel.satisfaction || 0,
+    productivity: sel.productivity || 0,
+    createdAt: Date.now(),
+  };
+
+  // Replace existing rating in state
+  state.ratings = state.ratings.filter(r => r.date !== rating.date);
+  state.ratings.push(rating);
+
+  await saveRating(rating);
+  showToast("Rating saved", "success");
+  render();
+}
+
 function exportCSV() {
   const rows = [["date","category","duration_hours","start_time","end_time"]];
   const sorted = [...state.entries].sort((a,b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
@@ -692,27 +899,221 @@ function render() {
 
   app.innerHTML = `
     <div class="header">
-      <h1>Time Tracker</h1>
+      <h1>${state.section === 'ratings' ? 'Daily Ratings' : 'Time Tracker'}</h1>
       <div class="connection">
         <span class="dot dot-ok"></span> Connected to Google Sheets
         <span style="margin-left:auto;cursor:pointer;color:var(--text3);font-size:11px;" onclick="disconnectSheet()">Disconnect</span>
       </div>
     </div>
 
-    <div class="tabs">
-      <button class="tab ${state.view==='log'?'active':''}" onclick="state.view='log';render()">Log</button>
-      <button class="tab ${state.view==='daily'?'active':''}" onclick="state.view='daily';render()">Daily</button>
-      <button class="tab ${state.view==='weekly'?'active':''}" onclick="state.view='weekly';render()">Weekly</button>
+    ${state.section === 'tracker' ? `
+      <div class="tabs">
+        <button class="tab ${state.view==='log'?'active':''}" onclick="state.view='log';render()">Log</button>
+        <button class="tab ${state.view==='daily'?'active':''}" onclick="state.view='daily';render()">Daily</button>
+        <button class="tab ${state.view==='weekly'?'active':''}" onclick="state.view='weekly';render()">Weekly</button>
+      </div>
+
+      ${state.view === 'log' ? renderLog(remaining, remColor, remBg, remBorder) : ''}
+      ${state.view === 'daily' ? renderDaily() : ''}
+      ${state.view === 'weekly' ? renderWeekly() : ''}
+
+      <button class="btn-csv" onclick="exportCSV()">📥 Export All Data as CSV</button>
+    ` : `
+      <div class="tabs">
+        <button class="tab ${state.ratingsView==='log'?'active':''}" onclick="state.ratingsView='log';render()">Log</button>
+        <button class="tab ${state.ratingsView==='trends'?'active':''}" onclick="state.ratingsView='trends';render()">Trends</button>
+      </div>
+
+      ${state.ratingsView === 'log' ? renderRatingsLog() : ''}
+      ${state.ratingsView === 'trends' ? renderRatingsTrends() : ''}
+    `}
+
+    <div class="section-nav-bottom">
+      <div class="section-nav-inner">
+        <button class="section-btn ${state.section==='tracker'?'active':''}" onclick="state.section='tracker';render()">⏱ Tracker</button>
+        <button class="section-btn ${state.section==='ratings'?'active':''}" onclick="state.section='ratings';loadRatingForDate(state.ratingsDate);render()">⭐ Ratings</button>
+      </div>
     </div>
-
-    ${state.view === 'log' ? renderLog(remaining, remColor, remBg, remBorder) : ''}
-    ${state.view === 'daily' ? renderDaily() : ''}
-    ${state.view === 'weekly' ? renderWeekly() : ''}
-
-    <button class="btn-csv" onclick="exportCSV()">📥 Export All Data as CSV</button>
 
     ${state.syncing ? '<div class="syncing">Syncing...</div>' : ''}
     ${renderToast()}
+  `;
+}
+
+function renderRatingsLog() {
+  const sel = state.ratingsSelections;
+  const existingRating = state.ratings.find(r => r.date === state.ratingsDate);
+
+  return `
+    <div class="fade-in">
+      <div class="date-row">
+        <input type="date" class="date-input" value="${state.ratingsDate}" onchange="state.ratingsDate=this.value;loadRatingForDate(this.value);render()">
+        ${existingRating ? '<div class="remaining-badge" style="color:var(--success);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25)">✓ Rated</div>' : ''}
+      </div>
+
+      <div class="section-title">How was ${state.ratingsDate === todayKey() ? 'today' : formatDateLabel(state.ratingsDate)}?</div>
+
+      ${RATINGS_CONFIG.map(metric => `
+        <div class="rating-block">
+          <div class="rating-block-header">
+            <span class="rating-block-icon">${metric.icon}</span>
+            <span class="rating-block-title" style="color:${metric.color}">${metric.label}</span>
+          </div>
+          <div class="rating-levels">
+            ${metric.levels.map((levelLabel, idx) => {
+              const level = idx + 1;
+              const isSelected = sel[metric.id] === level;
+              return `
+                <button class="rating-level-btn ${isSelected?'selected':''}"
+                  style="${isSelected?`background:${metric.color};border-color:${metric.color}`:''}"
+                  onclick="selectRating('${metric.id}', ${level})">
+                  <div class="rating-level-num">${level}</div>
+                  ${levelLabel}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `).join('')}
+
+      <button class="btn-submit-rating" onclick="submitRating()">
+        ${existingRating ? 'Update Rating' : 'Save Rating'}
+      </button>
+    </div>
+  `;
+}
+
+function renderRatingsTrends() {
+  const range = state.ratingsRange;
+  const endDate = new Date();
+  const dates = [];
+  for (let i = range - 1; i >= 0; i--) {
+    const d = new Date(endDate);
+    d.setDate(endDate.getDate() - i);
+    dates.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`);
+  }
+
+  // Build data map: date -> {stress, effort, satisfaction, productivity}
+  const dataByDate = {};
+  state.ratings.forEach(r => { dataByDate[r.date] = r; });
+
+  // Filter ratings within range
+  const rangeRatings = dates.map(d => dataByDate[d]).filter(Boolean);
+  const hasData = rangeRatings.length > 0;
+
+  // Calculate averages
+  const averages = {};
+  RATINGS_CONFIG.forEach(m => {
+    const vals = rangeRatings.map(r => r[m.id]).filter(v => v > 0);
+    averages[m.id] = vals.length > 0 ? vals.reduce((s,v)=>s+v,0) / vals.length : 0;
+  });
+
+  // Build SVG line chart
+  const chartWidth = 320;
+  const chartHeight = 200;
+  const padLeft = 24;
+  const padRight = 10;
+  const padTop = 10;
+  const padBottom = 24;
+  const plotW = chartWidth - padLeft - padRight;
+  const plotH = chartHeight - padTop - padBottom;
+
+  // X position for a date index
+  const xPos = (i) => padLeft + (dates.length > 1 ? (i / (dates.length - 1)) * plotW : plotW / 2);
+  // Y position for a rating value (1-5)
+  const yPos = (val) => padTop + plotH - ((val - 1) / 4) * plotH;
+
+  // Grid lines (1-5)
+  let gridLines = '';
+  for (let v = 1; v <= 5; v++) {
+    const y = yPos(v);
+    gridLines += `<line class="trends-grid-line" x1="${padLeft}" y1="${y}" x2="${chartWidth - padRight}" y2="${y}"/>`;
+    gridLines += `<text class="trends-axis-label" x="${padLeft - 4}" y="${y + 3}" text-anchor="end">${v}</text>`;
+  }
+
+  // X-axis date labels (show ~5 evenly spaced)
+  let xLabels = '';
+  const labelCount = Math.min(5, dates.length);
+  for (let i = 0; i < labelCount; i++) {
+    const idx = Math.round((i / Math.max(1, labelCount - 1)) * (dates.length - 1));
+    const d = new Date(dates[idx] + "T00:00:00");
+    const label = d.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+    xLabels += `<text class="trends-axis-label" x="${xPos(idx)}" y="${chartHeight - 6}" text-anchor="middle">${label}</text>`;
+  }
+
+  // Lines for each metric
+  let lines = '';
+  RATINGS_CONFIG.forEach(metric => {
+    if (!state.visibleMetrics[metric.id]) return;
+    const points = [];
+    dates.forEach((d, i) => {
+      const rating = dataByDate[d];
+      if (rating && rating[metric.id] > 0) {
+        points.push({ x: xPos(i), y: yPos(rating[metric.id]), i });
+      }
+    });
+    if (points.length === 0) return;
+
+    // Build a path that connects consecutive points
+    if (points.length === 1) {
+      lines += `<circle cx="${points[0].x}" cy="${points[0].y}" r="4" fill="${metric.color}"/>`;
+    } else {
+      const d = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+      lines += `<path class="trends-line" d="${d}" stroke="${metric.color}"/>`;
+      points.forEach(p => {
+        lines += `<circle class="trends-point" cx="${p.x}" cy="${p.y}" r="3" fill="${metric.color}" stroke="var(--surface)"/>`;
+      });
+    }
+  });
+
+  return `
+    <div class="fade-in">
+      <div class="range-nav">
+        <button class="range-btn ${range===7?'active':''}" onclick="state.ratingsRange=7;render()">7 days</button>
+        <button class="range-btn ${range===30?'active':''}" onclick="state.ratingsRange=30;render()">30 days</button>
+        <button class="range-btn ${range===90?'active':''}" onclick="state.ratingsRange=90;render()">90 days</button>
+      </div>
+
+      <div class="metric-toggles">
+        ${RATINGS_CONFIG.map(m => `
+          <div class="metric-toggle ${state.visibleMetrics[m.id]?'active':'hidden'}"
+            style="${state.visibleMetrics[m.id]?`color:${m.color};border-color:${m.color}`:''}"
+            onclick="state.visibleMetrics['${m.id}']=!state.visibleMetrics['${m.id}'];render()">
+            <div class="metric-dot" style="background:${m.color}"></div>
+            ${m.icon} ${m.label}
+          </div>
+        `).join('')}
+      </div>
+
+      ${!hasData ? '<div class="empty">No ratings in this range yet. Log some ratings first.</div>' : `
+        <div class="trends-chart">
+          <svg class="trends-svg" viewBox="0 0 ${chartWidth} ${chartHeight}" preserveAspectRatio="none">
+            ${gridLines}
+            ${xLabels}
+            ${lines}
+          </svg>
+        </div>
+
+        <div class="trends-summary">
+          ${RATINGS_CONFIG.map(m => {
+            const avg = averages[m.id];
+            const avgRounded = Math.round(avg);
+            const descriptor = avg > 0 ? m.levels[avgRounded - 1] : 'No data';
+            return `
+              <div class="trends-summary-card" style="border-left-color:${m.color}">
+                <div class="trends-summary-label" style="color:${m.color}">${m.icon} ${m.label}</div>
+                <div class="trends-summary-value" style="color:${m.color}">${avg > 0 ? avg.toFixed(1) : '—'}</div>
+                <div class="trends-summary-sub">${descriptor}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="margin-top:12px;font-size:11px;color:var(--text3);text-align:center">
+          ${rangeRatings.length} ${rangeRatings.length === 1 ? 'day' : 'days'} rated in last ${range} days
+        </div>
+      `}
+    </div>
   `;
 }
 
@@ -1008,6 +1409,7 @@ function renderWeekly() {
 // INIT
 // ============================================
 async function init() {
+  state.ratingsDate = todayKey();
   if (state.scriptUrl) {
     state.connecting = true;
     render();
@@ -1017,6 +1419,8 @@ async function init() {
         state.connected = true;
         state.connecting = false;
         await loadEntries();
+        await loadRatings();
+        render();
       } else {
         state.connecting = false;
         render();
